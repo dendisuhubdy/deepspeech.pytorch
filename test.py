@@ -36,13 +36,14 @@ def evaluate(test_loader, device, model, decoder, target_decoder, save_output=Fa
             split_targets.append(targets[offset:offset + size])
             offset += size
 
-        out, output_sizes = model(inputs, input_sizes)
+        # out, output_sizes = model(inputs) #, input_sizes)
+        out = model(inputs) #, input_sizes)
 
         if save_output:
             # add output to data array, and continue
             output_data.append((out.cpu().numpy(), output_sizes.numpy()))
 
-        decoded_output, _ = decoder.decode(out, output_sizes)
+        decoded_output, _ = decoder.decode(out) #, output_sizes)
         target_strings = target_decoder.convert_to_strings(split_targets)
         for x in range(len(target_strings)):
             transcript, reference = decoded_output[x][0], target_strings[x][0]
@@ -75,12 +76,12 @@ if __name__ == '__main__':
                                  cutoff_top_n=args.cutoff_top_n, cutoff_prob=args.cutoff_prob,
                                  beam_width=args.beam_width, num_processes=args.lm_workers)
     elif args.decoder == "greedy":
-        decoder = GreedyDecoder(model.labels, blank_index=model.labels.index('_'))
+        decoder = GreedyDecoder(model._labels, blank_index=model._labels.index('_'))
     else:
         decoder = None
-    target_decoder = GreedyDecoder(model.labels, blank_index=model.labels.index('_'))
-    test_dataset = SpectrogramDataset(audio_conf=model.audio_conf, manifest_filepath=args.test_manifest,
-                                      labels=model.labels, normalize=True)
+    target_decoder = GreedyDecoder(model._labels, blank_index=model._labels.index('_'))
+    test_dataset = SpectrogramDataset(audio_conf=model._audio_conf, manifest_filepath=args.test_manifest,
+                                      labels=model._labels, normalize=True)
     test_loader = AudioDataLoader(test_dataset, batch_size=args.batch_size,
                                   num_workers=args.num_workers)
     wer, cer, output_data = evaluate(test_loader=test_loader,

@@ -1,5 +1,5 @@
 import torch
-from apex.fp16_utils import BN_convert_float
+# from apex.fp16_utils import BN_convert_float
 import torch.distributed as dist
 
 from model import DeepSpeech

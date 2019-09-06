@@ -49,8 +49,9 @@ def transcribe(audio_path, parser, model, decoder, device):
     spect = spect.view(1, 1, spect.size(0), spect.size(1))
     spect = spect.to(device)
     input_sizes = torch.IntTensor([spect.size(3)]).int()
-    out, output_sizes = model(spect, input_sizes)
-    decoded_output, decoded_offsets = decoder.decode(out, output_sizes)
+    # out, output_sizes = model(spect, input_sizes)
+    out = model(spect) #, input_sizes)
+    decoded_output, decoded_offsets = decoder.decode(out) #, output_sizes=None)
     return decoded_output, decoded_offsets
 
 
@@ -68,13 +69,13 @@ if __name__ == '__main__':
     if args.decoder == "beam":
         from decoder import BeamCTCDecoder
 
-        decoder = BeamCTCDecoder(model.labels, lm_path=args.lm_path, alpha=args.alpha, beta=args.beta,
+        decoder = BeamCTCDecoder(model._labels, lm_path=args.lm_path, alpha=args.alpha, beta=args.beta,
                                  cutoff_top_n=args.cutoff_top_n, cutoff_prob=args.cutoff_prob,
                                  beam_width=args.beam_width, num_processes=args.lm_workers)
     else:
-        decoder = GreedyDecoder(model.labels, blank_index=model.labels.index('_'))
+        decoder = GreedyDecoder(model._labels, blank_index=model._labels.index('_'))
 
-    parser = SpectrogramParser(model.audio_conf, normalize=True)
+    parser = SpectrogramParser(model._audio_conf, normalize=True)
 
     decoded_output, decoded_offsets = transcribe(args.audio_path, parser, model, decoder, device)
     print(json.dumps(decode_results(model, decoded_output, decoded_offsets)))
